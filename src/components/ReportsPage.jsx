@@ -74,7 +74,7 @@ export default function ReportsPage() {
             />
             <YAxis tick={{ fill: "#8A93A8", fontSize: 10 }} axisLine={false} tickLine={false} />
             <Tooltip formatter={(v) => [`${v} kWh`, "Consumption"]} labelFormatter={(d) => `May ${d}`} />
-            <Bar dataKey="kwh" fill="#2F6FED" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="kwh" fill="#4A8445" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

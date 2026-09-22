@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Card, PanelHeader } from "./Card";
 
 const data = [
-  { name: "Engineering", value: 42, kwh: "1,032 kWh", color: "#2F6FED" },
+  { name: "Engineering", value: 42, kwh: "1,032 kWh", color: "#4A8445" },
   { name: "Administration", value: 23, kwh: "4,265 kWh", color: "#E8A317" },
   { name: "Library", value: 17, kwh: "1,715 kWh", color: "#22A559" },
   { name: "Science", value: 10, kwh: "1,862 kWh", color: "#8B6FE8" },

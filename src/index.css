@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,4 +8,29 @@ body {
   margin: 0;
   background-color: #f4f6fa;
   color: #1b2338;
+  font-family: "Roboto Condensed", sans-serif;
+}
+
+.sidebar-scroll {
+  scrollbar-color: rgba(216, 232, 213, 0.38) transparent;
+  scrollbar-width: thin;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 10px 0;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(216, 232, 213, 0.32);
+  border: 1px solid rgba(35, 69, 43, 0.5);
+  border-radius: 999px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8cfa3;
 }

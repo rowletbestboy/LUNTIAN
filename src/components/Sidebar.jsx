@@ -12,7 +12,19 @@ import {
   BarChart3,
   Leaf,
   FileBarChart,
+  LockKeyhole,
 } from "lucide-react";
+import luntianLogo from "../assets/Luntian logo.png";
+
+const PROTECTED_PAGES = new Set([
+  "devices",
+  "schedules",
+  "automation",
+  "alerts",
+  "analytics",
+  "energy-savings",
+  "reports",
+]);
 
 // Each item maps to a page key that App.jsx knows how to render.
 const SECTIONS = [
@@ -55,19 +67,17 @@ const SECTIONS = [
   },
 ];
 
-export default function Sidebar({ activePage, onNavigate }) {
+export default function Sidebar({ activePage, onNavigate, isAuthenticated, onRequestSignIn, onOpenProfile, profile }) {
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col bg-navy text-ice">
+    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col bg-navy text-ice">
       {/* Logo */}
       <button
         onClick={() => onNavigate("dashboard")}
         className="flex items-center gap-3 px-5 py-5 text-left"
       >
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ice text-sm font-bold text-navy">
-          C
-        </div>
+        <img src={luntianLogo} alt="Luntian logo" className="h-9 w-9 rounded-lg object-contain" />
         <div>
-          <div className="text-sm font-bold leading-tight text-white">CAMPUS</div>
+          <div className="text-sm font-bold leading-tight text-white">LUNTIAN</div>
           <div className="text-[9px] tracking-wide text-faint">
             RESOURCE MANAGEMENT
           </div>
@@ -77,7 +87,7 @@ export default function Sidebar({ activePage, onNavigate }) {
       <div className="mx-5 border-t border-navy-lighter" />
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 py-4">
         {SECTIONS.map((sec, i) => (
           <div key={i} className="mb-3">
             {sec.header && (
@@ -87,19 +97,24 @@ export default function Sidebar({ activePage, onNavigate }) {
             )}
             {sec.items.map(({ label, page, icon: Icon }) => {
               const isActive = page === activePage;
+              const isLocked = !isAuthenticated && PROTECTED_PAGES.has(page);
               return (
                 <button
                   key={label}
                   type="button"
-                  onClick={() => onNavigate(page)}
+                  onClick={() => (isLocked ? onRequestSignIn() : onNavigate(page))}
+                  title={isLocked ? "Admin sign in required" : undefined}
                   className={`mb-0.5 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
                     isActive
                       ? "bg-accent font-semibold text-white"
-                      : "text-ice hover:bg-navy-light"
+                      : isLocked
+                        ? "text-ice/55 hover:bg-navy-light hover:text-ice"
+                        : "text-ice hover:bg-navy-light"
                   }`}
                 >
                   <Icon size={16} strokeWidth={2} />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {isLocked && <LockKeyhole size={13} className="text-faint" />}
                 </button>
               );
             })}
@@ -107,16 +122,21 @@ export default function Sidebar({ activePage, onNavigate }) {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="flex items-center gap-2.5 bg-navy-light px-5 py-3.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ice text-xs font-bold text-navy">
-          A
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-white">Admin User</div>
-          <div className="text-[10px] text-faint">Super Administrator</div>
-        </div>
-      </div>
+      {isAuthenticated && (
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          className="flex items-center gap-2.5 bg-navy-light px-5 py-3.5 text-left transition-colors hover:bg-navy-lighter"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ice text-xs font-bold text-navy">
+            {profile.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-white">{profile.name}</div>
+            <div className="text-[10px] text-faint">{profile.role}</div>
+          </div>
+        </button>
+      )}
     </aside>
   );
 }

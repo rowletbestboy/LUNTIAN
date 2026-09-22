@@ -1,7 +1,7 @@
 import { Card, PanelHeader } from "./Card";
 
 const tanks = [
-  { name: "Engineering", pct: 76, vol: "7,600 / 10,000 L", color: "#9FD3E8" },
+  { name: "Engineering", pct: 76, vol: "7,600 / 10,000 L", color: "#A8CFA3" },
   { name: "Administration", pct: 48, vol: "4,800 / 10,000 L", color: "#F6D98A" },
   { name: "Library", pct: 89, vol: "8,900 / 10,000 L", color: "#8FD19E" },
   { name: "Science", pct: 94, vol: "9,400 / 10,000 L", color: "#8FD19E" },

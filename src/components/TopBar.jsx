@@ -1,9 +1,9 @@
-import { Bell, Calendar, Maximize2 } from "lucide-react";
+import { Calendar, LockKeyhole } from "lucide-react";
 
 /**
  * breadcrumb: array of { label, onClick? } — last item is the current page (not clickable).
  */
-export default function TopBar({ title, breadcrumb, rightLabel, statusPill }) {
+export default function TopBar({ title, breadcrumb, rightLabel, statusPill, isAuthenticated, onSignIn }) {
   return (
     <div className="mb-5 flex items-start justify-between">
       <div>
@@ -38,13 +38,21 @@ export default function TopBar({ title, breadcrumb, rightLabel, statusPill }) {
             {rightLabel}
           </div>
         )}
-        <button className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-ink">
-          <Bell size={16} />
-          <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-crit" />
-        </button>
-        <button className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-ink">
-          <Maximize2 size={15} />
-        </button>
+        {!isAuthenticated && (
+          <button
+            type="button"
+            onClick={onSignIn}
+            className="flex items-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#376A34]"
+          >
+            <LockKeyhole size={15} />
+            Sign in
+          </button>
+        )}
+        {isAuthenticated && (
+          <span className="rounded-lg border border-[#CFE2CC] bg-[#F1F8F0] px-3.5 py-2 text-sm font-semibold text-accent">
+            Admin access
+          </span>
+        )}
       </div>
     </div>
   );

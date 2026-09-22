@@ -2,7 +2,7 @@ import { Droplet } from "lucide-react";
 import { Card, PanelHeader, StatCard } from "./Card";
 
 const tanks = [
-  { name: "Engineering Building", pct: 76, vol: "7,600 / 10,000 L", color: "#2F6FED" },
+  { name: "Engineering Building", pct: 76, vol: "7,600 / 10,000 L", color: "#4A8445" },
   { name: "Administration Building", pct: 48, vol: "4,800 / 10,000 L", color: "#E8A317" },
   { name: "Library", pct: 89, vol: "8,900 / 10,000 L", color: "#22A559" },
   { name: "Science Building", pct: 94, vol: "9,400 / 10,000 L", color: "#22A559" },
@@ -13,10 +13,10 @@ export default function WaterOverviewPage() {
   return (
     <div>
       <div className="mb-5 grid grid-cols-4 gap-4">
-        <StatCard icon={Droplet} iconBg="#2F6FED" label="Average Tank Level" value="76%" sub="" />
-        <StatCard icon={Droplet} iconBg="#2F6FED" label="Today's Consumption" value="12,430 L" sub="" />
-        <StatCard icon={Droplet} iconBg="#2F6FED" label="Total Capacity" value="150,000 L" sub="" />
-        <StatCard icon={Droplet} iconBg="#2F6FED" label="Buildings Monitored" value="12" sub="" />
+        <StatCard icon={Droplet} iconBg="#4A8445" label="Average Tank Level" value="76%" sub="" />
+        <StatCard icon={Droplet} iconBg="#4A8445" label="Today's Consumption" value="12,430 L" sub="" />
+        <StatCard icon={Droplet} iconBg="#4A8445" label="Total Capacity" value="150,000 L" sub="" />
+        <StatCard icon={Droplet} iconBg="#4A8445" label="Buildings Monitored" value="12" sub="" />
       </div>
 
       <Card>

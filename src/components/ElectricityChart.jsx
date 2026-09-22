@@ -63,9 +63,9 @@ export default function ElectricityChart() {
             <Line
               type="monotone"
               dataKey="kw"
-              stroke="#2F6FED"
+              stroke="#4A8445"
               strokeWidth={2.5}
-              dot={{ r: 3.5, fill: "#2F6FED", strokeWidth: 0 }}
+              dot={{ r: 3.5, fill: "#4A8445", strokeWidth: 0 }}
               activeDot={{ r: 5 }}
             />
           </LineChart>

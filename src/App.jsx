@@ -16,10 +16,22 @@ import SchedulesPage from "./components/SchedulesPage";
 import AlertsPage from "./components/AlertsPage";
 import ReportsPage from "./components/ReportsPage";
 import PlaceholderPage from "./components/PlaceholderPage";
+import SignInPage from "./components/SignInPage";
+import AdminProfilePage from "./components/AdminProfilePage";
+
+const DEFAULT_PROFILE = { name: "Admin User", role: "Super Administrator", email: "admin@campus.local" };
+
+function getStoredProfile() {
+  try {
+    return { ...DEFAULT_PROFILE, ...JSON.parse(localStorage.getItem("luntian-admin-profile") || "{}") };
+  } catch {
+    return DEFAULT_PROFILE;
+  }
+}
 
 const dashboardStats = [
   { icon: Zap, iconBg: "#E8A317", label: "Total Electricity", value: "2,457 kW", sub: "Current Power" },
-  { icon: Droplet, iconBg: "#2F6FED", label: "Total Water", value: "76%", sub: "Average Tank Level" },
+  { icon: Droplet, iconBg: "#4A8445", label: "Total Water", value: "76%", sub: "Average Tank Level" },
   { icon: Building2, iconBg: "#8B6FE8", label: "Buildings Online", value: "12 / 15", sub: "Buildings" },
   { icon: Plug, iconBg: "#22A559", label: "Smart Outlets", value: "247", sub: "Active Outlets" },
   { icon: AlertCircle, iconBg: "#E0432B", label: "Alerts", value: "7", sub: "Active Alerts" },
@@ -47,6 +59,11 @@ const PAGE_META = {
 };
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => sessionStorage.getItem("luntian-admin-authenticated") === "true"
+  );
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [profile, setProfile] = useState(getStoredProfile);
   const [page, setPage] = useState("dashboard");
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -65,6 +82,26 @@ export default function App() {
     setSelectedRoom(room);
     setPage("room-detail");
   };
+
+  const openProfile = () => setPage("admin-profile");
+
+  const logout = () => {
+    sessionStorage.removeItem("luntian-admin-authenticated");
+    setIsAuthenticated(false);
+    setPage("dashboard");
+  };
+
+  if (showSignIn) {
+    return (
+      <SignInPage
+        onAuthenticated={() => {
+          setIsAuthenticated(true);
+          setShowSignIn(false);
+        }}
+        onCancel={() => setShowSignIn(false)}
+      />
+    );
+  }
 
   // Build breadcrumb + title for the current page
   let breadcrumb = null;
@@ -86,16 +123,26 @@ export default function App() {
   if (page === "room-monitoring") {
     breadcrumb = [{ label: "Buildings", onClick: () => navigate("buildings") }];
   }
+  if (page === "admin-profile") title = "Admin Profile";
 
   return (
-    <div className="flex min-h-screen bg-canvas">
-      <Sidebar activePage={page === "building-detail" || page === "room-detail" ? "buildings" : page} onNavigate={navigate} />
+    <div className="flex h-screen overflow-hidden bg-canvas">
+      <Sidebar
+        activePage={page === "building-detail" || page === "room-detail" ? "buildings" : page}
+        onNavigate={navigate}
+        isAuthenticated={isAuthenticated}
+        onRequestSignIn={() => setShowSignIn(true)}
+        onOpenProfile={openProfile}
+        profile={profile}
+      />
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="h-screen flex-1 overflow-y-auto p-6">
         <TopBar
           title={title}
           breadcrumb={breadcrumb}
           rightLabel={page === "dashboard" ? "May 20, 2024" : undefined}
+          isAuthenticated={isAuthenticated}
+          onSignIn={() => setShowSignIn(true)}
         />
 
         {page === "dashboard" && (
@@ -135,6 +182,10 @@ export default function App() {
         {page === "alerts" && <AlertsPage />}
 
         {page === "reports" && <ReportsPage />}
+
+        {page === "admin-profile" && (
+          <AdminProfilePage onProfileUpdated={setProfile} onLogout={logout} />
+        )}
 
         {PLACEHOLDER_TITLES[page] && <PlaceholderPage title={PLACEHOLDER_TITLES[page]} />}
       </main>

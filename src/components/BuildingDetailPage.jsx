@@ -73,7 +73,7 @@ export default function BuildingDetailPage({ buildingName, onOpenRoom }) {
                   <CartesianGrid vertical={false} stroke="#E3E8F2" />
                   <XAxis dataKey="t" tick={{ fill: "#8A93A8", fontSize: 11 }} axisLine={{ stroke: "#E3E8F2" }} tickLine={false} />
                   <YAxis tick={{ fill: "#8A93A8", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Line type="monotone" dataKey="kw" stroke="#2F6FED" strokeWidth={2.5} dot={{ r: 3.5, fill: "#2F6FED", strokeWidth: 0 }} />
+                  <Line type="monotone" dataKey="kw" stroke="#4A8445" strokeWidth={2.5} dot={{ r: 3.5, fill: "#4A8445", strokeWidth: 0 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

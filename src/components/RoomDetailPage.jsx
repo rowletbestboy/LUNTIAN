@@ -18,7 +18,7 @@ const chartData = [
 ];
 
 const breakdown = [
-  { name: "Air Conditioner", val: "42.1 kW", pct: "62%", color: "#2F6FED" },
+  { name: "Air Conditioner", val: "42.1 kW", pct: "62%", color: "#4A8445" },
   { name: "Lights", val: "8.3 kW", pct: "12%", color: "#E8A317" },
   { name: "Computers", val: "5.4 kW", pct: "8%", color: "#22A559" },
   { name: "Other", val: "11.5 kW", pct: "18%", color: "#C7CDDA" },
@@ -32,7 +32,7 @@ export default function RoomDetailPage({ room = "204" }) {
       </div>
 
       <div className="mb-5 grid grid-cols-4 gap-4">
-        <StatCard icon={Zap} iconBg="#2F6FED" label="Current Power" value="67.3 kW" sub="" />
+        <StatCard icon={Zap} iconBg="#4A8445" label="Current Power" value="67.3 kW" sub="" />
         <StatCard icon={Zap} iconBg="#22A559" label="Today's Consumption" value="328 kWh" sub="" />
         <StatCard icon={Zap} iconBg="#E8A317" label="This Month" value="6,842 kWh" sub="" />
         <StatCard icon={Zap} iconBg="#8B6FE8" label="Average Daily" value="228 kWh" sub="" />
@@ -47,7 +47,7 @@ export default function RoomDetailPage({ room = "204" }) {
                 <CartesianGrid vertical={false} stroke="#E3E8F2" />
                 <XAxis dataKey="t" tick={{ fill: "#8A93A8", fontSize: 11 }} axisLine={{ stroke: "#E3E8F2" }} tickLine={false} />
                 <YAxis tick={{ fill: "#8A93A8", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Line type="monotone" dataKey="kw" stroke="#2F6FED" strokeWidth={2.5} dot={{ r: 3.5, fill: "#2F6FED", strokeWidth: 0 }} />
+                <Line type="monotone" dataKey="kw" stroke="#4A8445" strokeWidth={2.5} dot={{ r: 3.5, fill: "#4A8445", strokeWidth: 0 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
