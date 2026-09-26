@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CircleDollarSign, Leaf, Zap } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, PanelHeader, StatCard } from "./Card";
+import { ELECTRICITY_EMISSIONS_KG_PER_KWH } from "../data/buildings";
 
 const savingSources = [
   { source: "Schedules", kwh: 3820 },
@@ -26,7 +27,7 @@ export default function EnergySavingsPage() {
   const savedKwh = Math.max(0, Number(baselineKwh) - Number(actualKwh));
   const costAvoided = savedKwh * Number(rate);
   const reductionPct = baselineKwh ? (savedKwh / Number(baselineKwh)) * 100 : 0;
-  const emissionsAvoided = savedKwh * 0.7;
+  const emissionsAvoided = savedKwh * ELECTRICITY_EMISSIONS_KG_PER_KWH;
 
   const saveAssumptions = (event) => {
     event.preventDefault();
@@ -43,7 +44,7 @@ export default function EnergySavingsPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={Zap} iconBg="#4A8445" label="Estimated energy saved" value={`${savedKwh.toLocaleString()} kWh`} sub="Baseline minus measured usage" />
         <StatCard icon={CircleDollarSign} iconBg="#E8A317" label="Estimated cost avoided" value={`₱${costAvoided.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} sub={`At ₱${Number(rate).toFixed(2)} per kWh`} />
-        <StatCard icon={Leaf} iconBg="#31AFC5" label="Estimated emissions avoided" value={`${(emissionsAvoided / 1000).toFixed(2)} tCO₂e`} sub="Using 0.7 kg CO₂e per kWh" />
+        <StatCard icon={Leaf} iconBg="#31AFC5" label="Estimated emissions avoided" value={`${(emissionsAvoided / 1000).toFixed(2)} tCO₂e`} sub={`Using ${ELECTRICITY_EMISSIONS_KG_PER_KWH} kg CO₂e per kWh`} />
         <StatCard icon={Zap} iconBg="#8B6FE8" label="Usage reduction" value={`${reductionPct.toFixed(1)}%`} sub="Compared with baseline" />
       </div>
 
@@ -76,7 +77,7 @@ export default function EnergySavingsPage() {
 
       <Card className="px-5 py-4">
         <h2 className="text-sm font-bold text-ink">Calculation basis</h2>
-        <p className="mt-1 text-xs leading-5 text-muted">Estimated kWh saved = baseline monthly energy minus current monthly energy. Cost avoided = estimated kWh saved multiplied by the electricity rate. Emissions use a placeholder factor of 0.7 kg CO₂e/kWh and should be replaced with the applicable grid factor.</p>
+        <p className="mt-1 text-xs leading-5 text-muted">Estimated kWh saved = baseline monthly energy minus current monthly energy. Cost avoided = estimated kWh saved multiplied by the electricity rate. Emissions use a placeholder factor of {ELECTRICITY_EMISSIONS_KG_PER_KWH} kg CO₂e/kWh and should be replaced with the applicable grid factor.</p>
       </Card>
     </div>
   );

@@ -7,7 +7,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Card, PanelHeader } from "./Card";
-import { buildings } from "../data/buildings";
+import { buildings, getBuildingEmissionsKg } from "../data/buildings";
 
 const chartData = [
   { t: "12 AM", kw: 30 },
@@ -28,6 +28,15 @@ export default function BuildingDetailPage({ buildingName }) {
       <div className="px-5 pt-3">
         <div className="text-xs font-medium uppercase tracking-wide text-muted">Today</div>
         <div className="mt-1 text-3xl font-bold text-ink">{building?.kwh || "No data"}</div>
+        {building && (
+          <div className="mt-3 border-t border-border pt-3">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted">Carbon emissions today</div>
+            <div className="mt-1 text-xl font-bold text-ink">
+              {getBuildingEmissionsKg(building).toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e
+            </div>
+            <div className="mt-0.5 text-xs text-muted">Calculated at 0.7 kg CO₂e per kWh</div>
+          </div>
+        )}
       </div>
       <div className="h-72 px-3 py-4">
         <ResponsiveContainer width="100%" height="100%">

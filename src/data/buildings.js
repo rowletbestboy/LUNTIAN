@@ -18,6 +18,16 @@ export const buildings = [
   { name: "DOST Pagasa Borongan", category: "Weather services", kwh: "188 kWh", pct: "92%", status: "Normal", coordinates: [11.66094, 125.44344] },
 ];
 
+export const ELECTRICITY_EMISSIONS_KG_PER_KWH = 0.7;
+
+export function getBuildingConsumptionKwh(building) {
+  return Number(building.kwh.replace(/[^\d]/g, ""));
+}
+
+export function getBuildingEmissionsKg(building) {
+  return getBuildingConsumptionKwh(building) * ELECTRICITY_EMISSIONS_KG_PER_KWH;
+}
+
 export const roomsByBuilding = {
   "Canuctan Hall": [{ name: "Main Hall", smartSockets: 8 }, { name: "Conference Room", smartSockets: 4 }],
   "College of Agriculture and Fishery": [{ name: "Room 101", smartSockets: 6 }, { name: "Room 102", smartSockets: 5 }, { name: "Laboratory 1", smartSockets: 8 }],

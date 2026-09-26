@@ -9,7 +9,7 @@ const tanks = [
   { name: "CCS IT Laboratory", pct: 62, vol: "6,300 / 10,000 L", color: "#E8A317" },
 ];
 
-export default function WaterOverviewPage() {
+export default function WaterOverviewPage({ onNavigate }) {
   return (
     <div>
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
@@ -37,7 +37,7 @@ export default function WaterOverviewPage() {
           ))}
         </div>
         <div className="flex justify-center pb-5">
-          <button className="rounded-full border border-border bg-white px-4 py-1.5 text-xs font-medium text-ink hover:bg-canvas">
+          <button onClick={() => onNavigate("tank-monitoring")} className="rounded-full border border-border bg-white px-4 py-1.5 text-xs font-medium text-ink hover:bg-canvas">
             View All Tanks
           </button>
         </div>

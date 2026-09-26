@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Zap, Droplet, Building2, Plug, AlertCircle } from "lucide-react";
+import { Zap, Droplet, Leaf, Plug, AlertCircle } from "lucide-react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import { StatCard } from "./components/Card";
@@ -22,6 +22,7 @@ import ReportsPage from "./components/ReportsPage";
 import PlaceholderPage from "./components/PlaceholderPage";
 import SignInPage from "./components/SignInPage";
 import AdminProfilePage from "./components/AdminProfilePage";
+import { buildings, getBuildingEmissionsKg, getBuildingConsumptionKwh } from "./data/buildings";
 
 const DEFAULT_PROFILE = { name: "Admin User", role: "Super Administrator", email: "admin@campus.local" };
 
@@ -33,10 +34,19 @@ function getStoredProfile() {
   }
 }
 
+const totalCampusConsumptionKwh = buildings.reduce(
+  (total, building) => total + getBuildingConsumptionKwh(building),
+  0
+);
+const totalCampusEmissionsKg = buildings.reduce(
+  (total, building) => total + getBuildingEmissionsKg(building),
+  0
+);
+
 const dashboardStats = [
   { icon: Zap, iconBg: "#E8A317", label: "Total Electricity", value: "2,457 kW", sub: "Current Power" },
   { icon: Droplet, iconBg: "#4A8445", label: "Total Water", value: "76%", sub: "Average Tank Level" },
-  { icon: Building2, iconBg: "#8B6FE8", label: "Registered Buildings", value: "17", sub: "Campus buildings" },
+  { icon: Leaf, iconBg: "#31AFC5", label: "Carbon Emitted", value: `${(totalCampusEmissionsKg / 1000).toFixed(2)} tCO₂e`, sub: `${totalCampusConsumptionKwh.toLocaleString()} kWh today` },
   { icon: Plug, iconBg: "#22A559", label: "Smart Outlets", value: "247", sub: "Active Outlets" },
   { icon: AlertCircle, iconBg: "#E0432B", label: "Alerts", value: "7", sub: "Active Alerts" },
 ];
@@ -147,7 +157,7 @@ export default function App() {
 
         {page === "building-detail" && <BuildingDetailPage buildingName={selectedBuilding} />}
 
-        {page === "water-overview" && <WaterOverviewPage />}
+        {page === "water-overview" && <WaterOverviewPage onNavigate={navigate} />}
 
         {page === "tank-monitoring" && <TankMonitoringPage />}
 

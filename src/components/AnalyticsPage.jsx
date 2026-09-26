@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Activity, Gauge, Zap } from "lucide-react";
+import { Activity, Gauge, Leaf, Zap } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, PanelHeader, StatCard } from "./Card";
-import { buildings } from "../data/buildings";
+import { buildings, ELECTRICITY_EMISSIONS_KG_PER_KWH, getBuildingConsumptionKwh } from "../data/buildings";
 
 const outletUsage = [
   { outlet: "Aircon · Room 204", location: "College of Engineering", kwh: 328, demand: "3.2 kW" },
@@ -21,7 +21,7 @@ export default function AnalyticsPage() {
   const [building, setBuilding] = useState("All buildings");
   const [period, setPeriod] = useState("This week");
   const campusDailyKwh = buildings.reduce(
-    (total, item) => total + Number(item.kwh.replace(/[^\d]/g, "")),
+    (total, item) => total + getBuildingConsumptionKwh(item),
     0
   );
   const visibleOutlets = building === "All buildings"
@@ -29,7 +29,7 @@ export default function AnalyticsPage() {
     : outletUsage.filter((outlet) => outlet.location === building);
   const selectedBuilding = buildings.find((item) => item.name === building);
   const factor = selectedBuilding
-    ? Number(selectedBuilding.kwh.replace(/[^\d]/g, "")) / campusDailyKwh
+    ? getBuildingConsumptionKwh(selectedBuilding) / campusDailyKwh
     : 1;
   const sourceTrend = period === "This week"
     ? weeklyTrends
@@ -41,6 +41,7 @@ export default function AnalyticsPage() {
   const total = chartData.reduce((sum, entry) => sum + entry.kwh, 0);
   const peak = Math.max(...chartData.map((entry) => entry.kwh));
   const mean = Math.round(total / chartData.length);
+  const emissionsKg = total * ELECTRICITY_EMISSIONS_KG_PER_KWH;
 
   return (
     <div className="space-y-4">
@@ -52,10 +53,11 @@ export default function AnalyticsPage() {
         <span className="text-xs text-muted">Illustrative outlet telemetry</span>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Zap} iconBg="#E8A317" label="Energy consumed" value={`${total.toLocaleString()} kWh`} sub={period} />
         <StatCard icon={Gauge} iconBg="#4A8445" label="Highest daily use" value={`${peak.toLocaleString()} kWh`} sub="Peak day in selected period" />
         <StatCard icon={Activity} iconBg="#31AFC5" label="Daily average" value={`${mean.toLocaleString()} kWh`} sub={building} />
+        <StatCard icon={Leaf} iconBg="#31AFC5" label="Carbon emissions" value={`${(emissionsKg / 1000).toFixed(2)} tCO₂e`} sub={`${period} · ${ELECTRICITY_EMISSIONS_KG_PER_KWH} kg CO₂e/kWh`} />
       </div>
 
       <Card>
@@ -77,8 +79,8 @@ export default function AnalyticsPage() {
         <PanelHeader title="HIGHEST-CONSUMING OUTLETS" right={<span className="text-xs text-muted">Today · sample data</span>} />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
-            <thead><tr className="border-b border-border text-left text-xs text-muted"><th className="px-5 py-3 font-medium">Outlet</th><th className="px-5 py-3 font-medium">Building</th><th className="px-5 py-3 text-right font-medium">Energy</th><th className="px-5 py-3 text-right font-medium">Current demand</th></tr></thead>
-            <tbody className="divide-y divide-border">{visibleOutlets.length ? visibleOutlets.map((outlet) => <tr key={outlet.outlet}><td className="px-5 py-3 font-medium text-ink">{outlet.outlet}</td><td className="px-5 py-3 text-muted">{outlet.location}</td><td className="px-5 py-3 text-right font-semibold tabular-nums text-ink">{outlet.kwh} kWh</td><td className="px-5 py-3 text-right tabular-nums text-ink">{outlet.demand}</td></tr>) : <tr><td colSpan={4} className="px-5 py-8 text-center text-muted">No sample outlet data for this building.</td></tr>}</tbody>
+            <thead><tr className="border-b border-border text-left text-xs text-muted"><th className="px-5 py-3 font-medium">Outlet</th><th className="px-5 py-3 font-medium">Building</th><th className="px-5 py-3 text-right font-medium">Energy</th><th className="px-5 py-3 text-right font-medium">Emissions</th><th className="px-5 py-3 text-right font-medium">Current demand</th></tr></thead>
+            <tbody className="divide-y divide-border">{visibleOutlets.length ? visibleOutlets.map((outlet) => <tr key={outlet.outlet}><td className="px-5 py-3 font-medium text-ink">{outlet.outlet}</td><td className="px-5 py-3 text-muted">{outlet.location}</td><td className="px-5 py-3 text-right font-semibold tabular-nums text-ink">{outlet.kwh} kWh</td><td className="px-5 py-3 text-right tabular-nums text-ink">{(outlet.kwh * ELECTRICITY_EMISSIONS_KG_PER_KWH).toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e</td><td className="px-5 py-3 text-right tabular-nums text-ink">{outlet.demand}</td></tr>) : <tr><td colSpan={5} className="px-5 py-8 text-center text-muted">No sample outlet data for this building.</td></tr>}</tbody>
           </table>
         </div>
       </Card>

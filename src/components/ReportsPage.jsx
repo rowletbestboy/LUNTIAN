@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Download, FileDown, FileText } from "lucide-react";
 import { Card, PanelHeader } from "./Card";
-import { buildings } from "../data/buildings";
+import { buildings, ELECTRICITY_EMISSIONS_KG_PER_KWH, getBuildingConsumptionKwh } from "../data/buildings";
 import { waterTanksByBuilding } from "../data/waterTanks";
 
 const outletSamples = [
@@ -46,13 +46,27 @@ function getRows(type, scope, period) {
 
   if (type === "Energy Savings") {
     return selected.map((building) => {
-      const dailyKwh = Number(building.kwh.replace(/[^\d]/g, ""));
+      const dailyKwh = getBuildingConsumptionKwh(building);
       return {
         building: building.name,
         consumption: Math.round(dailyKwh * days * 0.1),
         unit: "kWh saved",
         status: "Estimate",
         detail: "Assumes 10% reduction from daily sample use",
+      };
+    });
+  }
+
+  if (type === "Carbon Emissions") {
+    return selected.map((building) => {
+      const dailyKwh = getBuildingConsumptionKwh(building);
+      const dailyEmissionsKg = dailyKwh * ELECTRICITY_EMISSIONS_KG_PER_KWH;
+      return {
+        building: building.name,
+        consumption: dailyEmissionsKg * days,
+        unit: "kg CO₂e",
+        status: "Estimate",
+        detail: `${dailyEmissionsKg.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e/day · ${dailyKwh.toLocaleString()} kWh/day`,
       };
     });
   }
@@ -65,11 +79,12 @@ function getRows(type, scope, period) {
       const stored = tanks.reduce((sum, tank) => sum + Math.round(tank.capacityL * tank.levelPct / 100), 0);
       return { building: building.name, consumption: dailyTotal * days, unit: "L", status: `${tanks.length} tanks`, detail: `${dailyTotal.toLocaleString()} L/day · ${stored.toLocaleString()} / ${capacity.toLocaleString()} L stored` };
     }
-    const dailyKwh = Number(building.kwh.replace(/[^\d]/g, ""));
+    const dailyKwh = getBuildingConsumptionKwh(building);
     return {
       building: building.name,
       consumption: dailyKwh * days,
       unit: "kWh",
+      emissionsKg: dailyKwh * days * ELECTRICITY_EMISSIONS_KG_PER_KWH,
       status: building.status,
       detail: `${dailyKwh.toLocaleString()} kWh/day · ${building.pct} of reference use`,
     };
@@ -77,8 +92,9 @@ function getRows(type, scope, period) {
 }
 
 function downloadCsv({ rows, type, period, scope, summary }) {
-  const headers = ["Building", "Value", "Unit", "Status", "Details"];
-  const values = rows.map((row) => [row.building, row.consumption, row.unit, row.status, row.detail]);
+  const hasEmissionsColumn = type === "Electricity Consumption";
+  const headers = ["Building", "Value", "Unit", ...(hasEmissionsColumn ? ["Emissions (kg CO₂e)"] : []), "Status", "Details"];
+  const values = rows.map((row) => [row.building, row.consumption, row.unit, ...(hasEmissionsColumn ? [row.emissionsKg] : []), row.status, row.detail]);
   const report = [
     ["LUNTIAN RESOURCE MANAGEMENT"],
     [`${type} Report`],
@@ -90,6 +106,7 @@ function downloadCsv({ rows, type, period, scope, summary }) {
     ["Metric", "Value"],
     [summary.totalLabel, `${summary.total.toLocaleString()} ${summary.unit}`],
     [summary.averageLabel, `${summary.average.toLocaleString()} ${summary.unit}`],
+    ...(hasEmissionsColumn ? [["Carbon emissions total", `${summary.carbonTotalKg.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e`]] : []),
     [summary.highestLabel, summary.topBuilding ? `${summary.topBuilding.building} · ${summary.topBuilding.consumption.toLocaleString()} ${summary.unit}` : "No data"],
     [],
     ["BUILDING DETAILS"],
@@ -117,12 +134,16 @@ async function downloadPdf({ rows, type, period, scope, summary }) {
   const margin = 16;
   const generatedAt = new Date().toLocaleString();
   const cardGap = 5;
-  const cardWidth = (pageWidth - margin * 2 - cardGap * 2) / 3;
+  const hasEmissionsColumn = type === "Electricity Consumption";
   const summaries = [
     { label: summary.totalLabel, value: `${summary.total.toLocaleString()} ${summary.unit}` },
     { label: summary.averageLabel, value: `${summary.average.toLocaleString()} ${summary.unit}` },
     { label: summary.highestLabel, value: summary.topBuilding?.building || "No data", detail: summary.topBuilding ? `${summary.topBuilding.consumption.toLocaleString()} ${summary.unit}` : "" },
   ];
+  if (hasEmissionsColumn) {
+    summaries.splice(1, 0, { label: "Carbon emissions", value: `${summary.carbonTotalKg.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e` });
+  }
+  const cardWidth = (pageWidth - margin * 2 - cardGap * (summaries.length - 1)) / summaries.length;
 
   doc.setProperties({ title: `${type} Report`, subject: `${period} · ${scope}`, author: "Luntian Resource Management" });
   doc.setFillColor(35, 69, 43);
@@ -167,13 +188,15 @@ async function downloadPdf({ rows, type, period, scope, summary }) {
   autoTable(doc, {
     startY: 82,
     margin: { left: margin, right: margin, bottom: 17 },
-    head: [["Building", "Value", "Unit", "Status", "Details"]],
-    body: rows.map((row) => [row.building, row.consumption.toLocaleString(), row.unit, row.status, row.detail]),
+    head: [["Building", "Value", "Unit", ...(hasEmissionsColumn ? ["Emissions (kg CO₂e)"] : []), "Status", "Details"]],
+    body: rows.map((row) => [row.building, row.consumption.toLocaleString(), row.unit, ...(hasEmissionsColumn ? [row.emissionsKg.toLocaleString(undefined, { maximumFractionDigits: 1 })] : []), row.status, row.detail]),
     theme: "grid",
     styles: { font: "helvetica", fontSize: 8.5, cellPadding: 3, textColor: [43, 56, 47], lineColor: [222, 230, 224], lineWidth: 0.2, overflow: "linebreak" },
     headStyles: { fillColor: [35, 69, 43], textColor: [255, 255, 255], fontStyle: "bold" },
     alternateRowStyles: { fillColor: [246, 249, 246] },
-    columnStyles: { 0: { cellWidth: 54 }, 1: { cellWidth: 24, halign: "right" }, 2: { cellWidth: 24 }, 3: { cellWidth: 33 }, 4: { cellWidth: "auto" } },
+    columnStyles: hasEmissionsColumn
+      ? { 0: { cellWidth: 48 }, 1: { cellWidth: 22, halign: "right" }, 2: { cellWidth: 19 }, 3: { cellWidth: 30, halign: "right" }, 4: { cellWidth: 25 }, 5: { cellWidth: "auto" } }
+      : { 0: { cellWidth: 54 }, 1: { cellWidth: 24, halign: "right" }, 2: { cellWidth: 24 }, 3: { cellWidth: 33 }, 4: { cellWidth: "auto" } },
     didDrawPage: (data) => {
       const pageHeight = doc.internal.pageSize.getHeight();
       doc.setDrawColor(222, 230, 224);
@@ -210,20 +233,31 @@ export default function ReportsPage() {
       ? "Outlet readings"
       : applied.type === "Energy Savings"
         ? "Estimated savings"
+        : applied.type === "Carbon Emissions"
+          ? "Carbon emissions total"
         : "Estimated period total";
   const averageLabel = applied.type === "Alerts"
     ? "Average alerts per building"
-    : applied.type === "Smart Outlet Status"
-      ? "Outlet records per building"
-      : "Average per building";
+      : applied.type === "Smart Outlet Status"
+        ? "Outlet records per building"
+        : applied.type === "Carbon Emissions"
+          ? "Average emissions per building"
+          : "Average per building";
   const highestLabel = applied.type === "Alerts"
     ? "First affected building"
     : applied.type === "Smart Outlet Status"
       ? "Highest outlet demand"
       : applied.type === "Energy Savings"
         ? "Highest estimated saving"
+        : applied.type === "Carbon Emissions"
+          ? "Highest building emissions"
         : "Highest building use";
   const exportSummary = { total, average, unit, totalLabel, averageLabel, highestLabel, topBuilding };
+  exportSummary.carbonTotalKg = applied.type === "Carbon Emissions"
+    ? total
+    : applied.type === "Electricity Consumption"
+      ? total * ELECTRICITY_EMISSIONS_KG_PER_KWH
+      : null;
 
   const generateReport = (event) => {
     event.preventDefault();
@@ -259,7 +293,7 @@ export default function ReportsPage() {
       <Card>
         <PanelHeader title="REPORT BUILDER" right={<FileText size={16} className="text-muted" />} />
         <form onSubmit={generateReport} className="flex flex-wrap items-end gap-3 px-5 py-4">
-          <label className="text-xs font-medium text-muted">Report type<select value={type} onChange={(event) => setType(event.target.value)} className="mt-1 block rounded-md border border-border bg-white px-3 py-2 text-sm text-ink"><option>Electricity Consumption</option><option>Water Consumption</option><option>Smart Outlet Status</option><option>Alerts</option><option>Energy Savings</option></select></label>
+          <label className="text-xs font-medium text-muted">Report type<select value={type} onChange={(event) => setType(event.target.value)} className="mt-1 block rounded-md border border-border bg-white px-3 py-2 text-sm text-ink"><option>Electricity Consumption</option><option>Carbon Emissions</option><option>Water Consumption</option><option>Smart Outlet Status</option><option>Alerts</option><option>Energy Savings</option></select></label>
           <label className="text-xs font-medium text-muted">Period<select value={period} onChange={(event) => setPeriod(event.target.value)} className="mt-1 block rounded-md border border-border bg-white px-3 py-2 text-sm text-ink"><option>This month</option><option>Last month</option><option>This week</option></select></label>
           <label className="text-xs font-medium text-muted">Scope<select value={scope} onChange={(event) => setScope(event.target.value)} className="mt-1 block min-w-56 rounded-md border border-border bg-white px-3 py-2 text-sm text-ink"><option>All buildings</option>{buildings.map((building) => <option key={building.name}>{building.name}</option>)}</select></label>
           <button type="submit" className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-[#376A34]">Generate report</button>
@@ -268,15 +302,16 @@ export default function ReportsPage() {
 
       <Card>
         <PanelHeader title={`${applied.type.toUpperCase()} · ${applied.period.toUpperCase()}`} right={<span className="text-xs text-muted">{applied.scope}</span>} />
-        <div className="grid gap-3 px-5 py-4 sm:grid-cols-3">
+        <div className={`grid gap-3 px-5 py-4 ${applied.type === "Electricity Consumption" ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
           <div className="rounded-lg border border-border bg-canvas p-3"><div className="text-xs text-muted">{totalLabel}</div><div className="mt-1 text-xl font-bold text-ink">{total.toLocaleString()} {unit}</div></div>
+          {applied.type === "Electricity Consumption" && <div className="rounded-lg border border-border bg-canvas p-3"><div className="text-xs text-muted">Carbon emissions</div><div className="mt-1 text-xl font-bold text-ink">{exportSummary.carbonTotalKg.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e</div><div className="text-xs text-muted">At {ELECTRICITY_EMISSIONS_KG_PER_KWH} kg CO₂e/kWh</div></div>}
           <div className="rounded-lg border border-border bg-canvas p-3"><div className="text-xs text-muted">{averageLabel}</div><div className="mt-1 text-xl font-bold text-ink">{average.toLocaleString()} {unit}</div></div>
           <div className="rounded-lg border border-border bg-canvas p-3"><div className="text-xs text-muted">{highestLabel}</div><div className="mt-1 truncate text-base font-bold text-ink">{topBuilding?.building || "No data"}</div><div className="text-xs text-muted">{topBuilding ? `${topBuilding.consumption.toLocaleString()} ${unit}` : ""}</div></div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[620px] text-sm">
-            <thead><tr className="border-y border-border bg-canvas/60 text-left text-xs text-muted"><th className="px-5 py-3 font-medium">Building</th><th className="px-5 py-3 text-right font-medium">Consumption</th><th className="px-5 py-3 font-medium">Status / tanks</th><th className="px-5 py-3 font-medium">Details</th></tr></thead>
-            <tbody className="divide-y divide-border">{rows.map((row) => <tr key={row.building}><td className="px-5 py-3 font-medium text-ink">{row.building}</td><td className="px-5 py-3 text-right font-semibold tabular-nums text-ink">{row.consumption.toLocaleString()} {row.unit}</td><td className="px-5 py-3 text-muted">{row.status}</td><td className="px-5 py-3 text-muted">{row.detail}</td></tr>)}</tbody>
+          <table className={`w-full ${applied.type === "Electricity Consumption" ? "min-w-[760px]" : "min-w-[620px]"} text-sm`}>
+            <thead><tr className="border-y border-border bg-canvas/60 text-left text-xs text-muted"><th className="px-5 py-3 font-medium">Building</th><th className="px-5 py-3 text-right font-medium">{applied.type === "Carbon Emissions" ? "Emissions" : "Consumption"}</th>{applied.type === "Electricity Consumption" && <th className="px-5 py-3 text-right font-medium">Carbon emissions</th>}<th className="px-5 py-3 font-medium">Status / tanks</th><th className="px-5 py-3 font-medium">Details</th></tr></thead>
+            <tbody className="divide-y divide-border">{rows.map((row) => <tr key={row.building}><td className="px-5 py-3 font-medium text-ink">{row.building}</td><td className="px-5 py-3 text-right font-semibold tabular-nums text-ink">{row.consumption.toLocaleString(undefined, { maximumFractionDigits: 1 })} {row.unit}</td>{applied.type === "Electricity Consumption" && <td className="px-5 py-3 text-right tabular-nums text-ink">{row.emissionsKg.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg CO₂e</td>}<td className="px-5 py-3 text-muted">{row.status}</td><td className="px-5 py-3 text-muted">{row.detail}</td></tr>)}</tbody>
           </table>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4">
