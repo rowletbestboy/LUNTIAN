@@ -1,95 +1,112 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Building2, ChevronRight, DoorOpen, Plug } from "lucide-react";
 import { Card, PanelHeader } from "./Card";
-
-const initialDevices = [
-  { device: "Aircon - Room 204", location: "Eng. Bldg. / 2F", status: "ON", power: "3.2 kW", schedule: "7:00 AM - 5:00 PM" },
-  { device: "Aircon - Room 205", location: "Eng. Bldg. / 2F", status: "OFF", power: "0 kW", schedule: "7:00 AM - 5:00 PM" },
-  { device: "Aircon - Room 306", location: "Eng. Bldg. / 3F", status: "ON", power: "2.8 kW", schedule: "7:00 AM - 5:00 PM" },
-  { device: "Aircon - Room 101", location: "Admin Bldg. / 1F", status: "OFF", power: "0 kW", schedule: "8:00 AM - 6:00 PM" },
-  { device: "Aircon - Library 1F", location: "Library / 1F", status: "ON", power: "1.9 kW", schedule: "7:00 AM - 5:00 PM" },
-];
+import { buildings, roomsByBuilding } from "../data/buildings";
 
 export default function DevicesPage() {
-  const [devices, setDevices] = useState(initialDevices);
-  const [tab, setTab] = useState("All Devices");
-
-  const toggle = (name) => {
-    setDevices((prev) =>
-      prev.map((d) =>
-        d.device === name ? { ...d, status: d.status === "ON" ? "OFF" : "ON" } : d
-      )
-    );
-  };
-
-  const filtered = devices.filter((d) => {
-    if (tab === "Currently ON") return d.status === "ON";
-    if (tab === "Currently OFF") return d.status === "OFF";
-    return true;
-  });
+  const [selectedBuilding, setSelectedBuilding] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const rooms = selectedBuilding ? roomsByBuilding[selectedBuilding] || [] : [];
 
   return (
-    <div>
-      <div className="mb-4 flex justify-end">
-        <button className="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white">
-          <Plus size={14} /> Add Device
-        </button>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
+          <button
+            type="button"
+            onClick={() => { setSelectedBuilding(null); setSelectedRoom(null); }}
+            className={`font-semibold ${selectedBuilding ? "text-accent hover:underline" : "text-ink"}`}
+          >
+            Buildings
+          </button>
+          {selectedBuilding && (
+            <>
+              <ChevronRight size={14} className="text-muted" />
+              <button
+                type="button"
+                onClick={() => setSelectedRoom(null)}
+                className={`truncate font-semibold ${selectedRoom ? "text-accent hover:underline" : "text-ink"}`}
+              >
+                {selectedBuilding}
+              </button>
+            </>
+          )}
+          {selectedRoom && (
+            <>
+              <ChevronRight size={14} className="text-muted" />
+              <span className="font-semibold text-ink">{selectedRoom.name}</span>
+            </>
+          )}
+        </div>
+        {(selectedBuilding || selectedRoom) && (
+          <button
+            type="button"
+            onClick={() => selectedRoom ? setSelectedRoom(null) : setSelectedBuilding(null)}
+            className="flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+          >
+            <ArrowLeft size={15} /> Back
+          </button>
+        )}
       </div>
 
-      <Card>
-        <PanelHeader title="SMART OUTLETS" />
-        <div className="flex gap-6 border-b border-border px-5 pt-3">
-          {["All Devices", "Currently ON", "Currently OFF", "Scheduled"].map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`-mb-px border-b-2 pb-2 text-sm ${
-                tab === t ? "border-accent font-semibold text-accent" : "border-transparent text-muted"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted">
-              <th className="px-5 py-3 font-medium">Device</th>
-              <th className="px-5 py-3 font-medium">Location</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Power</th>
-              <th className="px-5 py-3 font-medium">Schedule</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-5 py-6 text-center text-muted">
-                  No devices in this view.
-                </td>
-              </tr>
-            )}
-            {filtered.map((d) => (
-              <tr key={d.device}>
-                <td className="px-5 py-3 font-medium text-ink">{d.device}</td>
-                <td className="px-5 py-3 text-muted">{d.location}</td>
-                <td className="px-5 py-3">
-                  <button
-                    onClick={() => toggle(d.device)}
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      d.status === "ON" ? "bg-ok/10 text-ok" : "bg-faint/20 text-muted"
-                    }`}
-                  >
-                    {d.status}
-                  </button>
-                </td>
-                <td className="px-5 py-3 text-ink">{d.power}</td>
-                <td className="px-5 py-3 text-muted">{d.schedule}</td>
-              </tr>
+      {!selectedBuilding && (
+        <Card>
+          <PanelHeader title="REGISTERED BUILDINGS" />
+          <div className="grid gap-2 p-4 sm:grid-cols-2 xl:grid-cols-3">
+            {buildings.map((building) => (
+              <button
+                key={building.name}
+                type="button"
+                onClick={() => setSelectedBuilding(building.name)}
+                className="flex min-h-14 items-center gap-3 rounded-lg border border-border px-4 py-3 text-left transition-colors hover:border-accent/50 hover:bg-canvas"
+              >
+                <Building2 size={17} className="shrink-0 text-accent" />
+                <span className="flex-1 text-sm font-semibold text-ink">{building.name}</span>
+                <ChevronRight size={16} className="shrink-0 text-muted" />
+              </button>
             ))}
-          </tbody>
-        </table>
-      </Card>
+          </div>
+        </Card>
+      )}
+
+      {selectedBuilding && !selectedRoom && (
+        <Card>
+          <PanelHeader title="ROOMS" />
+          <div className="divide-y divide-border px-5">
+            {rooms.map((room) => (
+              <button
+                key={room.name}
+                type="button"
+                onClick={() => setSelectedRoom(room)}
+                className="flex w-full items-center gap-3 py-4 text-left hover:text-accent"
+              >
+                <DoorOpen size={17} className="shrink-0 text-accent" />
+                <span className="flex-1 text-sm font-medium text-ink">{room.name}</span>
+                <ChevronRight size={16} className="shrink-0 text-muted" />
+              </button>
+            ))}
+            {rooms.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted">No registered rooms for this building.</p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {selectedRoom && (
+        <Card className="max-w-xl">
+          <PanelHeader title="REGISTERED SMART SOCKETS" />
+          <div className="flex items-center gap-4 px-5 py-6">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-ice text-accent">
+              <Plug size={22} />
+            </div>
+            <div>
+              <div className="text-sm text-muted">{selectedBuilding} / {selectedRoom.name}</div>
+              <div className="mt-1 text-3xl font-bold text-ink">{selectedRoom.smartSockets}</div>
+              <div className="text-sm text-muted">smart sockets registered</div>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

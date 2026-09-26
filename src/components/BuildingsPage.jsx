@@ -1,26 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 import { Building2, Search, ChevronDown, LocateFixed, Map, Navigation } from "lucide-react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
-import { Card, StatusPill } from "./Card";
+import { Card } from "./Card";
+import { buildings } from "../data/buildings";
 
-const CAMPUS_CENTER = [11.6603535, 125.4423667];
-
-const buildings = [
-  { name: "College of Engineering", category: "College", kwh: "1,284 kWh", pct: "76%", status: "Normal", coordinates: [11.6608, 125.4417] },
-  { name: "College of Education", category: "College", kwh: "1,118 kWh", pct: "81%", status: "Normal", coordinates: [11.6606, 125.4422] },
-  { name: "College of Business and Management", category: "College", kwh: "1,862 kWh", pct: "48%", status: "High Usage", coordinates: [11.6606, 125.4430] },
-  { name: "College of Arts and Sciences", category: "College", kwh: "936 kWh", pct: "86%", status: "Normal", coordinates: [11.6602, 125.4416] },
-  { name: "College of Nursing", category: "College", kwh: "742 kWh", pct: "78%", status: "Normal", coordinates: [11.6599, 125.4422] },
-  { name: "ESSU College of Law", category: "College", kwh: "604 kWh", pct: "69%", status: "Normal", coordinates: [11.6610, 125.4432] },
-  { name: "ESSU Chapel", category: "Faith and community", kwh: "188 kWh", pct: "92%", status: "Normal", coordinates: [11.6597, 125.4432] },
-  { name: "Canuctan Hall", category: "Events and community", kwh: "496 kWh", pct: "73%", status: "Normal", coordinates: [11.6601, 125.4428] },
-  { name: "Laboratory Building", category: "Research and instruction", kwh: "1,074 kWh", pct: "88%", status: "Normal", coordinates: [11.6597, 125.4417] },
-  { name: "ESSU Library", category: "Student services", kwh: "612 kWh", pct: "89%", status: "Normal", coordinates: [11.6599, 125.4431] },
-  { name: "Administration Building", category: "Administration", kwh: "1,420 kWh", pct: "64%", status: "Normal", coordinates: [11.6609, 125.4426] },
-  { name: "University Pavilion", category: "Events and community", kwh: "356 kWh", pct: "71%", status: "Normal", coordinates: [11.6595, 125.4425] },
-  { name: "Theatro Ibabawnon", category: "Arts and culture", kwh: "428 kWh", pct: "67%", status: "Normal", coordinates: [11.6603, 125.4435] },
-  { name: "ESSU Gymnasium", category: "Sports and recreation", kwh: "368 kWh", pct: "71%", status: "Normal", coordinates: [11.6608, 125.4425] },
-];
+const CAMPUS_CENTER = [11.66013, 125.44311];
 
 function ResetMapView({ mapRef }) {
   const map = useMap();
@@ -102,14 +86,13 @@ export default function BuildingsPage({ onOpenBuilding }) {
                   center={building.coordinates}
                   radius={isSelected ? 12 : 9}
                   pathOptions={{ color: "#23452B", weight: 3, fillColor: isSelected ? "#4A8445" : "#A8CFA3", fillOpacity: 0.95 }}
-                  eventHandlers={{ click: () => chooseBuilding(building) }}
+                  eventHandlers={{ click: () => onOpenBuilding(building.name) }}
                 >
                   <Popup>
                     <div className="min-w-[150px]">
                       <div className="font-bold text-[#1B2338]">{building.name}</div>
-                              <div className="mt-1 text-xs text-[#8A93A8]">{building.category}</div>
-                              <div className="text-xs text-[#8A93A8]">{building.kwh} today</div>
-                      <button type="button" onClick={() => onOpenBuilding(building.name)} className="mt-2 rounded-md bg-[#4A8445] px-2.5 py-1.5 text-xs font-semibold text-white">Open details</button>
+                      <div className="mt-1 text-xs text-[#8A93A8]">{building.kwh} today</div>
+                      <button type="button" onClick={() => onOpenBuilding(building.name)} className="mt-2 rounded-md bg-[#4A8445] px-2.5 py-1.5 text-xs font-semibold text-white">View consumption</button>
                     </div>
                   </Popup>
                 </CircleMarker>
@@ -129,11 +112,10 @@ export default function BuildingsPage({ onOpenBuilding }) {
             <div>
               <div className="text-xs font-bold uppercase tracking-wide text-muted">Selected building</div>
               <div className="mt-1 text-base font-bold text-ink">{selectedBuilding.name}</div>
-              <div className="mt-0.5 text-xs text-muted">{selectedBuilding.category}</div>
+              <div className="mt-0.5 text-xs text-muted">{selectedBuilding.kwh} today</div>
             </div>
             <div className="flex items-center gap-4">
-              <StatusPill status={selectedBuilding.status} />
-              <button type="button" onClick={() => onOpenBuilding(selectedBuilding.name)} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#376A34]">Open details</button>
+              <button type="button" onClick={() => onOpenBuilding(selectedBuilding.name)} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#376A34]">View consumption</button>
             </div>
           </div>
         )}
@@ -153,14 +135,10 @@ export default function BuildingsPage({ onOpenBuilding }) {
                 </div>
                 <span>
                   <span className="block font-semibold text-ink">{b.name}</span>
-                  <span className="mt-0.5 block text-xs text-muted">{b.category}</span>
                 </span>
               </div>
-              <div className="text-xs text-muted">&darr; {b.kwh}</div>
-              <div className="mt-1 text-xl font-bold text-ink">{b.pct}</div>
-              <div className="mt-2">
-                <StatusPill status={b.status} />
-              </div>
+              <div className="text-xs text-muted">Electricity today</div>
+              <div className="mt-1 text-xl font-bold text-ink">{b.kwh}</div>
             </Card>
           </button>
         ))}

@@ -3,25 +3,25 @@ import { Card, PanelHeader } from "./Card";
 
 const alerts = [
   {
-    title: "Engineering Building",
+    title: "College of Engineering",
     desc: "Electricity usage is 28% higher than normal",
     time: "10 min ago",
     level: "crit",
   },
   {
-    title: "Administration Building",
+    title: "ESSU Infirmary",
     desc: "Water consumption is unusually high",
     time: "25 min ago",
     level: "warn",
   },
   {
-    title: "Room 204 (Eng. Bldg.)",
+    title: "College of Engineering - Room 204",
     desc: "Aircon is ON outside scheduled time",
     time: "1 hr ago",
     level: "warn",
   },
   {
-    title: "Science Building",
+    title: "College of Science Building",
     desc: "Water sensor is offline",
     time: "2 hrs ago",
     level: "offline",

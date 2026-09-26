@@ -9,10 +9,14 @@ import WaterTankStatus from "./components/WaterTankStatus";
 import RecentAlerts from "./components/RecentAlerts";
 import BuildingsPage from "./components/BuildingsPage";
 import BuildingDetailPage from "./components/BuildingDetailPage";
-import RoomDetailPage from "./components/RoomDetailPage";
+import CampusOverviewPage from "./components/CampusOverviewPage";
 import WaterOverviewPage from "./components/WaterOverviewPage";
+import TankMonitoringPage from "./components/TankMonitoringPage";
 import DevicesPage from "./components/DevicesPage";
 import SchedulesPage from "./components/SchedulesPage";
+import AutomationPage from "./components/AutomationPage";
+import AnalyticsPage from "./components/AnalyticsPage";
+import EnergySavingsPage from "./components/EnergySavingsPage";
 import AlertsPage from "./components/AlertsPage";
 import ReportsPage from "./components/ReportsPage";
 import PlaceholderPage from "./components/PlaceholderPage";
@@ -32,30 +36,24 @@ function getStoredProfile() {
 const dashboardStats = [
   { icon: Zap, iconBg: "#E8A317", label: "Total Electricity", value: "2,457 kW", sub: "Current Power" },
   { icon: Droplet, iconBg: "#4A8445", label: "Total Water", value: "76%", sub: "Average Tank Level" },
-  { icon: Building2, iconBg: "#8B6FE8", label: "Buildings Online", value: "12 / 15", sub: "Buildings" },
+  { icon: Building2, iconBg: "#8B6FE8", label: "Registered Buildings", value: "17", sub: "Campus buildings" },
   { icon: Plug, iconBg: "#22A559", label: "Smart Outlets", value: "247", sub: "Active Outlets" },
   { icon: AlertCircle, iconBg: "#E0432B", label: "Alerts", value: "7", sub: "Active Alerts" },
 ];
 
-// page keys that don't have a real design yet -> shown as an honest placeholder
-const PLACEHOLDER_TITLES = {
-  "campus-overview": "Campus Overview",
-  "tank-monitoring": "Tank Monitoring",
-  "water-consumption": "Water Consumption",
-  automation: "Automation",
-  analytics: "Analytics",
-  "energy-savings": "Energy Savings",
-};
-
 const PAGE_META = {
   dashboard: { title: "Dashboard" },
+  "campus-overview": { title: "Campus Overview" },
   buildings: { title: "Buildings" },
   "water-overview": { title: "Water Overview" },
+  "tank-monitoring": { title: "Tank Monitoring" },
   devices: { title: "Smart Outlets" },
   schedules: { title: "Schedules" },
+  automation: { title: "Automation" },
   alerts: { title: "Alerts" },
+  analytics: { title: "Analytics" },
+  "energy-savings": { title: "Energy Savings" },
   reports: { title: "Reports" },
-  "room-monitoring": { title: "Room 204" },
 };
 
 export default function App() {
@@ -66,7 +64,6 @@ export default function App() {
   const [profile, setProfile] = useState(getStoredProfile);
   const [page, setPage] = useState("dashboard");
   const [selectedBuilding, setSelectedBuilding] = useState(null);
-  const [selectedRoom, setSelectedRoom] = useState(null);
 
   const navigate = (nextPage) => {
     setPage(nextPage);
@@ -76,11 +73,6 @@ export default function App() {
   const openBuilding = (name) => {
     setSelectedBuilding(name);
     setPage("building-detail");
-  };
-
-  const openRoom = (room) => {
-    setSelectedRoom(room);
-    setPage("room-detail");
   };
 
   const openProfile = () => setPage("admin-profile");
@@ -106,37 +98,23 @@ export default function App() {
   // Build breadcrumb + title for the current page
   let breadcrumb = null;
   let title = PAGE_META[page]?.title || "";
-  let statusPill = null;
-
   if (page === "building-detail") {
     title = selectedBuilding;
-    breadcrumb = [{ label: "Buildings", onClick: () => navigate("buildings") }];
-  }
-  if (page === "room-detail") {
-    title = `Room ${selectedRoom}`;
-    breadcrumb = [
-      { label: "Buildings", onClick: () => navigate("buildings") },
-      { label: selectedBuilding || "Engineering Building", onClick: () => setPage("building-detail") },
-      { label: "2nd Floor" },
-    ];
-  }
-  if (page === "room-monitoring") {
     breadcrumb = [{ label: "Buildings", onClick: () => navigate("buildings") }];
   }
   if (page === "admin-profile") title = "Admin Profile";
 
   return (
-    <div className="flex h-screen overflow-hidden bg-canvas">
+    <div className="flex min-h-dvh flex-col bg-canvas lg:h-dvh lg:flex-row lg:overflow-hidden">
       <Sidebar
-        activePage={page === "building-detail" || page === "room-detail" ? "buildings" : page}
+        activePage={page === "building-detail" ? "buildings" : page}
         onNavigate={navigate}
         isAuthenticated={isAuthenticated}
-        onRequestSignIn={() => setShowSignIn(true)}
         onOpenProfile={openProfile}
         profile={profile}
       />
 
-      <main className="h-screen flex-1 overflow-y-auto p-6">
+      <main className="min-h-0 min-w-0 w-full flex-1 overflow-x-hidden px-3 py-4 sm:px-4 lg:overflow-y-auto lg:p-6">
         <TopBar
           title={title}
           breadcrumb={breadcrumb}
@@ -147,39 +125,43 @@ export default function App() {
 
         {page === "dashboard" && (
           <>
-            <div className="mb-5 grid grid-cols-5 gap-4">
+            <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
               {dashboardStats.map((s) => (
                 <StatCard key={s.label} {...s} />
               ))}
             </div>
-            <div className="mb-5 flex gap-4">
+            <div className="mb-5 flex flex-col gap-4 xl:flex-row">
               <ElectricityChart />
               <BreakdownDonut />
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-4 xl:flex-row">
               <WaterTankStatus />
               <RecentAlerts />
             </div>
           </>
         )}
 
+        {page === "campus-overview" && <CampusOverviewPage />}
+
         {page === "buildings" && <BuildingsPage onOpenBuilding={openBuilding} />}
 
-        {page === "building-detail" && (
-          <BuildingDetailPage buildingName={selectedBuilding} onOpenRoom={openRoom} />
-        )}
-
-        {page === "room-detail" && <RoomDetailPage room={selectedRoom} />}
-
-        {page === "room-monitoring" && <RoomDetailPage room="204" />}
+        {page === "building-detail" && <BuildingDetailPage buildingName={selectedBuilding} />}
 
         {page === "water-overview" && <WaterOverviewPage />}
+
+        {page === "tank-monitoring" && <TankMonitoringPage />}
 
         {page === "devices" && <DevicesPage />}
 
         {page === "schedules" && <SchedulesPage />}
 
+        {page === "automation" && <AutomationPage />}
+
         {page === "alerts" && <AlertsPage />}
+
+        {page === "analytics" && <AnalyticsPage />}
+
+        {page === "energy-savings" && <EnergySavingsPage />}
 
         {page === "reports" && <ReportsPage />}
 
@@ -187,7 +169,6 @@ export default function App() {
           <AdminProfilePage onProfileUpdated={setProfile} onLogout={logout} />
         )}
 
-        {PLACEHOLDER_TITLES[page] && <PlaceholderPage title={PLACEHOLDER_TITLES[page]} />}
       </main>
     </div>
   );

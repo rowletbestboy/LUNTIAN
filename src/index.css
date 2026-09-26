@@ -11,6 +11,21 @@ body {
   font-family: "Roboto Condensed", sans-serif;
 }
 
+@keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .sidebar-scroll {
   scrollbar-color: rgba(216, 232, 213, 0.38) transparent;
   scrollbar-width: thin;

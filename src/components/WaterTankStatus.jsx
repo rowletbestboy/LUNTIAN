@@ -1,18 +1,18 @@
 import { Card, PanelHeader } from "./Card";
 
 const tanks = [
-  { name: "Engineering", pct: 76, vol: "7,600 / 10,000 L", color: "#A8CFA3" },
-  { name: "Administration", pct: 48, vol: "4,800 / 10,000 L", color: "#F6D98A" },
-  { name: "Library", pct: 89, vol: "8,900 / 10,000 L", color: "#8FD19E" },
-  { name: "Science", pct: 94, vol: "9,400 / 10,000 L", color: "#8FD19E" },
-  { name: "Cafeteria", pct: 62, vol: "6,300 / 10,000 L", color: "#F0C173" },
+  { name: "College of Engineering", pct: 76, vol: "7,600 / 10,000 L", color: "#A8CFA3" },
+  { name: "Canuctan Hall", pct: 48, vol: "4,800 / 10,000 L", color: "#F6D98A" },
+  { name: "College of Agriculture and Fishery", pct: 89, vol: "8,900 / 10,000 L", color: "#8FD19E" },
+  { name: "College of Science Building", pct: 94, vol: "9,400 / 10,000 L", color: "#8FD19E" },
+  { name: "CCS IT Laboratory", pct: 62, vol: "6,300 / 10,000 L", color: "#F0C173" },
 ];
 
 export default function WaterTankStatus() {
   return (
     <Card className="flex-1">
       <PanelHeader title="WATER TANK STATUS (TOP 5)" />
-      <div className="grid grid-cols-5 gap-3 px-4 py-4">
+      <div className="grid grid-cols-2 gap-3 px-4 py-4 sm:grid-cols-3 xl:grid-cols-5">
         {tanks.map((t) => (
           <div
             key={t.name}
