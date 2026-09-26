@@ -12,6 +12,7 @@ import {
   BarChart3,
   Leaf,
   FileBarChart,
+  Settings2,
   Menu,
   X,
 } from "lucide-react";
@@ -25,10 +26,15 @@ const PROTECTED_PAGES = new Set([
   "analytics",
   "energy-savings",
   "reports",
+  "asset-management",
 ]);
 
 // Each item maps to a page key that App.jsx knows how to render.
 const SECTIONS = [
+  {
+    header: "Administration",
+    items: [{ label: "Asset Management", page: "asset-management", icon: Settings2 }],
+  },
   {
     header: null,
     items: [{ label: "Dashboard", page: "dashboard", icon: LayoutDashboard }],

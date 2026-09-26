@@ -22,6 +22,7 @@ import ReportsPage from "./components/ReportsPage";
 import PlaceholderPage from "./components/PlaceholderPage";
 import SignInPage from "./components/SignInPage";
 import AdminProfilePage from "./components/AdminProfilePage";
+import AssetManagementPage from "./components/AssetManagementPage";
 import { buildings, getBuildingEmissionsKg, getBuildingConsumptionKwh } from "./data/buildings";
 
 const DEFAULT_PROFILE = { name: "Admin User", role: "Super Administrator", email: "admin@campus.local" };
@@ -76,6 +77,10 @@ export default function App() {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
 
   const navigate = (nextPage) => {
+    if (nextPage === "asset-management" && !isAuthenticated) {
+      setShowSignIn(true);
+      return;
+    }
     setPage(nextPage);
     if (nextPage !== "buildings") setSelectedBuilding(null);
   };
@@ -178,6 +183,8 @@ export default function App() {
         {page === "admin-profile" && (
           <AdminProfilePage onProfileUpdated={setProfile} onLogout={logout} />
         )}
+
+        {page === "asset-management" && isAuthenticated && <AssetManagementPage />}
 
       </main>
     </div>
