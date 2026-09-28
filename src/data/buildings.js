@@ -1,31 +1,32 @@
 export const buildings = [
-  { name: "Canuctan Hall", category: "Events and community", kwh: "496 kWh", pct: "73%", status: "Normal", coordinates: [11.66163, 125.44444] },
-  { name: "College of Agriculture and Fishery", category: "College", kwh: "1,118 kWh", pct: "81%", status: "Normal", coordinates: [11.66153, 125.44358] },
-  { name: "College of Science Building", category: "College", kwh: "936 kWh", pct: "86%", status: "Normal", coordinates: [11.66153, 125.44287] },
-  { name: "CCS IT Laboratory", category: "Research and instruction", kwh: "1,074 kWh", pct: "88%", status: "Normal", coordinates: [11.65862, 125.44304] },
-  { name: "College of Criminal Justice Education", category: "College", kwh: "604 kWh", pct: "69%", status: "Normal", coordinates: [11.65915, 125.44402] },
-  { name: "College of Engineering", category: "College", kwh: "1,284 kWh", pct: "76%", status: "Normal", coordinates: [11.65920, 125.44223] },
-  { name: "ESSU Infirmary", category: "Health services", kwh: "742 kWh", pct: "78%", status: "Normal", coordinates: [11.65921, 125.44346] },
-  { name: "ESSU Chapel", category: "Faith and community", kwh: "188 kWh", pct: "92%", status: "Normal", coordinates: [11.65900, 125.44313] },
-  { name: "ESSU Athletic Grounds", category: "Sports and recreation", kwh: "368 kWh", pct: "71%", status: "Normal", coordinates: [11.66056, 125.44139] },
-  { name: "Administration Building", category: "Administration", kwh: "1,420 kWh", pct: "64%", status: "Normal", coordinates: [11.66023, 125.44200] },
-  { name: "ESSU Faculty Lounge", category: "Faculty services", kwh: "428 kWh", pct: "67%", status: "Normal", coordinates: [11.66045, 125.44261] },
-  { name: "College of Education", category: "College", kwh: "1,118 kWh", pct: "81%", status: "Normal", coordinates: [11.65949, 125.44346] },
-  { name: "College of Hospitality Management", category: "College", kwh: "936 kWh", pct: "86%", status: "Normal", coordinates: [11.65929, 125.44428] },
-  { name: "Graduate School", category: "Graduate education", kwh: "612 kWh", pct: "89%", status: "Normal", coordinates: [11.65964, 125.44470] },
-  { name: "ESSU Library", category: "Student services", kwh: "612 kWh", pct: "89%", status: "Normal", coordinates: [11.66084, 125.44435] },
-  { name: "College of Law", category: "College", kwh: "604 kWh", pct: "69%", status: "Normal", coordinates: [11.66043, 125.44483] },
-  { name: "DOST Pagasa Borongan", category: "Weather services", kwh: "188 kWh", pct: "92%", status: "Normal", coordinates: [11.66094, 125.44344] },
+  { name: "Canuctan Hall", category: "Events and community", coordinates: [11.66163, 125.44444] },
+  { name: "College of Agriculture and Fishery", category: "College", coordinates: [11.66153, 125.44358] },
+  { name: "College of Science Building", category: "College", coordinates: [11.66153, 125.44287] },
+  { name: "CCS IT Laboratory", category: "Research and instruction", coordinates: [11.65862, 125.44304] },
+  { name: "College of Criminal Justice Education", category: "College", coordinates: [11.65915, 125.44402] },
+  { name: "College of Engineering", category: "College", coordinates: [11.65920, 125.44223] },
+  { name: "ESSU Infirmary", category: "Health services", coordinates: [11.65921, 125.44346] },
+  { name: "ESSU Chapel", category: "Faith and community", coordinates: [11.65900, 125.44313] },
+  { name: "ESSU Athletic Grounds", category: "Sports and recreation", coordinates: [11.66056, 125.44139] },
+  { name: "Administration Building", category: "Administration", coordinates: [11.66023, 125.44200] },
+  { name: "ESSU Faculty Lounge", category: "Faculty services", coordinates: [11.66045, 125.44261] },
+  { name: "College of Education", category: "College", coordinates: [11.65949, 125.44346] },
+  { name: "College of Hospitality Management", category: "College", coordinates: [11.65929, 125.44428] },
+  { name: "Graduate School", category: "Graduate education", coordinates: [11.65964, 125.44470] },
+  { name: "ESSU Library", category: "Student services", coordinates: [11.66084, 125.44435] },
+  { name: "College of Law", category: "College", coordinates: [11.66043, 125.44483] },
+  { name: "DOST Pagasa Borongan", category: "Weather services", coordinates: [11.66094, 125.44344] },
 ];
 
 export const ELECTRICITY_EMISSIONS_KG_PER_KWH = 0.7;
 
 export function getBuildingConsumptionKwh(building) {
-  return Number(building.kwh.replace(/[^\d]/g, ""));
+  return Number.isFinite(building?.kwh) ? building.kwh : null;
 }
 
 export function getBuildingEmissionsKg(building) {
-  return getBuildingConsumptionKwh(building) * ELECTRICITY_EMISSIONS_KG_PER_KWH;
+  const consumption = getBuildingConsumptionKwh(building);
+  return consumption === null ? null : consumption * ELECTRICITY_EMISSIONS_KG_PER_KWH;
 }
 
 export const roomsByBuilding = {

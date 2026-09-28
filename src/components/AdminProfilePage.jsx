@@ -2,25 +2,16 @@ import { useState } from "react";
 import { Check, KeyRound, Save, UserRound } from "lucide-react";
 import { Card } from "./Card";
 
-const PROFILE_STORAGE_KEY = "luntian-admin-profile";
-const DEFAULT_PROFILE = {
-  name: "Admin User",
-  role: "Super Administrator",
-  email: "admin@campus.local",
-};
+import { requireSupabase } from "../lib/supabase";
 
-function getStoredProfile() {
-  try {
-    return { ...DEFAULT_PROFILE, ...JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) || "{}") };
-  } catch {
-    return DEFAULT_PROFILE;
-  }
-}
-
-export default function AdminProfilePage({ onProfileUpdated, onLogout }) {
-  const [profile, setProfile] = useState(getStoredProfile);
-  const [newPasskey, setNewPasskey] = useState("");
-  const [confirmPasskey, setConfirmPasskey] = useState("");
+export default function AdminProfilePage({ user, onProfileUpdated, onLogout }) {
+  const [profile, setProfile] = useState({
+    name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Administrator",
+    role: user.app_metadata?.role || "Administrator",
+    email: user.email || "",
+  });
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -29,28 +20,32 @@ export default function AdminProfilePage({ onProfileUpdated, onLogout }) {
     setMessage("");
   };
 
-  const saveProfile = (event) => {
+  const saveProfile = async (event) => {
     event.preventDefault();
     setError("");
     setMessage("");
 
-    if (newPasskey && newPasskey.length < 8) {
-      setError("Your new passkey must be at least 8 characters.");
+    if (newPassword && newPassword.length < 8) {
+      setError("Your new password must be at least 8 characters.");
       return;
     }
-    if (newPasskey !== confirmPasskey) {
-      setError("The new passkey and confirmation do not match.");
+    if (newPassword !== confirmPassword) {
+      setError("The new password and confirmation do not match.");
       return;
     }
 
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
-    if (newPasskey) {
-      localStorage.setItem("luntian-admin-passkey", newPasskey);
-      setNewPasskey("");
-      setConfirmPasskey("");
+    try {
+      const updates = { data: { full_name: profile.name.trim() } };
+      if (newPassword) updates.password = newPassword;
+      const { data, error: updateError } = await requireSupabase().auth.updateUser(updates);
+      if (updateError) throw updateError;
+      onProfileUpdated(data.user);
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessage("Profile settings saved.");
+    } catch (updateError) {
+      setError(updateError.message || "Could not update your account.");
     }
-    onProfileUpdated(profile);
-    setMessage("Profile settings saved.");
   };
 
   return (
@@ -62,7 +57,7 @@ export default function AdminProfilePage({ onProfileUpdated, onLogout }) {
           </div>
           <div>
             <h2 className="text-lg font-bold text-ink">Profile details</h2>
-            <p className="text-sm text-muted">Update the information shown in the administrator panel.</p>
+            <p className="text-sm text-muted">Update your account details stored in Supabase Auth.</p>
           </div>
         </div>
 
@@ -80,8 +75,8 @@ export default function AdminProfilePage({ onProfileUpdated, onLogout }) {
               Role
               <input
                 value={profile.role}
-                onChange={(event) => updateProfile("role", event.target.value)}
-                className="mt-2 w-full rounded-lg border border-border bg-white px-3 py-2.5 font-normal outline-none transition-colors focus:border-accent"
+                readOnly
+                className="mt-2 w-full rounded-lg border border-border bg-canvas px-3 py-2.5 font-normal text-muted outline-none"
               />
             </label>
           </div>
@@ -90,33 +85,33 @@ export default function AdminProfilePage({ onProfileUpdated, onLogout }) {
             <input
               type="email"
               value={profile.email}
-              onChange={(event) => updateProfile("email", event.target.value)}
-              className="mt-2 w-full rounded-lg border border-border bg-white px-3 py-2.5 font-normal outline-none transition-colors focus:border-accent"
+              readOnly
+              className="mt-2 w-full rounded-lg border border-border bg-canvas px-3 py-2.5 font-normal text-muted outline-none"
             />
           </label>
 
           <div className="border-t border-border pt-6">
             <div className="mb-4 flex items-center gap-2">
               <KeyRound size={17} className="text-accent" />
-              <h3 className="text-sm font-bold text-ink">Change passkey</h3>
+              <h3 className="text-sm font-bold text-ink">Change password</h3>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="text-sm font-semibold text-ink">
-                New passkey
+                New password
                 <input
                   type="password"
-                  value={newPasskey}
-                  onChange={(event) => setNewPasskey(event.target.value)}
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
                   placeholder="At least 8 characters"
                   className="mt-2 w-full rounded-lg border border-border bg-white px-3 py-2.5 font-normal outline-none transition-colors focus:border-accent"
                 />
               </label>
               <label className="text-sm font-semibold text-ink">
-                Confirm passkey
+                Confirm password
                 <input
                   type="password"
-                  value={confirmPasskey}
-                  onChange={(event) => setConfirmPasskey(event.target.value)}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
                   placeholder="Repeat new passkey"
                   className="mt-2 w-full rounded-lg border border-border bg-white px-3 py-2.5 font-normal outline-none transition-colors focus:border-accent"
                 />

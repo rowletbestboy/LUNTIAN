@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Plus, Building2, Droplet, Plug } from "lucide-react";
 import { Card, PanelHeader } from "./Card";
 import { buildings, roomsByBuilding } from "../data/buildings";
-import { loadManagedAssets, saveManagedAssets } from "../data/assetStorage";
+import { loadManagedAssets, saveManagedAsset } from "../data/assetStorage";
 
 const ASSET_TYPES = [
   { id: "buildings", label: "Buildings", icon: Building2 },
@@ -75,12 +75,23 @@ function getAssetTitle(type, asset, assets) {
   return `${asset.label} · ${room ? `${room.buildingName} / ${room.name}` : "Unknown room"}`;
 }
 
-export default function AssetManagementPage() {
-  const [assets, setAssets] = useState(loadManagedAssets);
+export default function AssetManagementPage({ userId }) {
+  const [assets, setAssets] = useState({ buildings: [], rooms: [], tanks: [], sockets: [] });
   const [activeType, setActiveType] = useState("buildings");
   const [forms, setForms] = useState(INITIAL_FORMS);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    let isCurrent = true;
+    loadManagedAssets(userId)
+      .then((loadedAssets) => { if (isCurrent) setAssets(loadedAssets); })
+      .catch((loadError) => { if (isCurrent) setError(loadError.message); })
+      .finally(() => { if (isCurrent) setIsLoading(false); });
+    return () => { isCurrent = false; };
+  }, [userId]);
 
   const buildingOptions = useMemo(() => getBuildingOptions(assets), [assets]);
   const roomOptions = useMemo(() => getRoomOptions(assets), [assets]);
@@ -94,7 +105,7 @@ export default function AssetManagementPage() {
     setMessage("");
   };
 
-  const submitAsset = (event) => {
+  const submitAsset = async (event) => {
     event.preventDefault();
     setError("");
     setMessage("");
@@ -156,14 +167,17 @@ export default function AssetManagementPage() {
       return;
     }
 
-    const nextAssets = { ...assets, [activeType]: [...assets[activeType], newAsset] };
+    setIsSaving(true);
     try {
-      saveManagedAssets(nextAssets);
+      const savedAsset = await saveManagedAsset(userId, activeType, newAsset);
+      const nextAssets = { ...assets, [activeType]: [...assets[activeType], savedAsset] };
       setAssets(nextAssets);
       setForms((current) => ({ ...current, [activeType]: INITIAL_FORMS[activeType] }));
       setMessage(`${ASSET_TYPES.find((type) => type.id === activeType)?.label.replace(/s$/, "")} added.`);
-    } catch {
-      setError("Could not save this asset in browser storage.");
+    } catch (saveError) {
+      setError(saveError.message || "Could not save this asset to the database.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -251,14 +265,16 @@ export default function AssetManagementPage() {
             {error && <p role="alert" className="text-sm font-medium text-crit">{error}</p>}
             {message && <p role="status" className="flex items-center gap-1.5 text-sm font-medium text-accent"><Check size={15} />{message}</p>}
             <div className="flex justify-end border-t border-border pt-4">
-              <button type="submit" className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#376A34]"><Plus size={16} />Add {ASSET_TYPES.find((type) => type.id === activeType)?.label.replace(/s$/, "")}</button>
+              <button type="submit" disabled={isLoading || isSaving} className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#376A34] disabled:cursor-wait disabled:opacity-60"><Plus size={16} />{isSaving ? "Saving..." : `Add ${ASSET_TYPES.find((type) => type.id === activeType)?.label.replace(/s$/, "")}`}</button>
             </div>
           </form>
         </Card>
 
         <Card>
           <PanelHeader title={`ADDED ${ASSET_TYPES.find((type) => type.id === activeType)?.label.toUpperCase()}`} right={<span className="text-xs font-medium text-muted">{activeAssets.length} total</span>} />
-          {activeAssets.length ? (
+          {isLoading ? (
+            <div className="px-5 py-10 text-center text-sm text-muted">Loading assets...</div>
+          ) : activeAssets.length ? (
             <ul className="divide-y divide-border px-5">
               {activeAssets.slice().reverse().map((asset) => (
                 <li key={asset.id} className="flex items-start justify-between gap-3 py-4">
@@ -281,7 +297,7 @@ export default function AssetManagementPage() {
           )}
         </Card>
       </div>
-      <p className="text-xs text-muted">Temporary setup: registrations are stored in this browser until the database is connected.</p>
+      <p className="text-xs text-muted">Registered assets are stored in the connected Supabase project.</p>
     </div>
   );
 }

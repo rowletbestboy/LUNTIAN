@@ -2,23 +2,32 @@ import { useState } from "react";
 import { ArrowRight, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
 import campusImage from "../assets/54da0dba-a67b-44e0-abe9-8a4f154ee423.jpg";
 import luntianLogo from "../assets/Luntian logo.png";
+import { isSupabaseConfigured, requireSupabase } from "../lib/supabase";
 
 export default function SignInPage({ onAuthenticated, onCancel }) {
-  const [passkey, setPasskey] = useState("");
-  const [showPasskey, setShowPasskey] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const savedPasskey = localStorage.getItem("luntian-admin-passkey") || "LUNTIAN-ADMIN";
-    if (passkey.trim() !== savedPasskey) {
-      setError("That passkey is not recognized. Please try again.");
-      return;
+    setError("");
+    setIsSubmitting(true);
+    try {
+      const { error: signInError } = await requireSupabase().auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (signInError) throw signInError;
+      onAuthenticated();
+    } catch (signInError) {
+      setError(isSupabaseConfigured
+        ? signInError.message
+        : "Backend not configured. Add your Supabase URL and publishable key to .env.local.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    sessionStorage.setItem("luntian-admin-authenticated", "true");
-    onAuthenticated();
   };
 
   return (
@@ -91,49 +100,54 @@ export default function SignInPage({ onAuthenticated, onCancel }) {
             <h2 className="text-5xl font-bold tracking-wide text-navy">LUNTIAN</h2>
             <p className="mt-2 max-w-sm text-base font-semibold text-ink">Welcome back.</p>
             <p className="mt-1 max-w-sm text-sm leading-6 text-muted">
-              Enter your private passkey to access the Luntian resource dashboard.
+              Sign in with the administrator account provisioned in Supabase.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="max-w-sm">
-            <label htmlFor="passkey" className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink">
-              Admin passkey
+            <label htmlFor="email" className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink">
+              Email address
             </label>
             <div className={`flex items-center rounded-xl border bg-white px-3 transition-colors ${error ? "border-crit" : "border-border focus-within:border-accent"}`}>
               <KeyRound size={17} className="shrink-0 text-muted" />
               <input
-                id="passkey"
-                type={showPasskey ? "text" : "password"}
-                value={passkey}
+                id="email"
+                type="email"
+                value={email}
                 onChange={(event) => {
-                  setPasskey(event.target.value);
+                  setEmail(event.target.value);
                   setError("");
                 }}
-                placeholder="Enter your passkey"
-                autoComplete="current-password"
+                placeholder="admin@campus.edu"
+                autoComplete="username"
+                required
                 autoFocus
                 className="min-w-0 flex-1 bg-transparent px-3 py-3.5 text-sm text-ink outline-none placeholder:text-faint"
               />
-              <button
-                type="button"
-                onClick={() => setShowPasskey((visible) => !visible)}
-                className="px-1 text-xs font-semibold text-muted transition-colors hover:text-accent"
-              >
-                {showPasskey ? "Hide" : "Show"}
-              </button>
             </div>
+            <label htmlFor="password" className="mb-2 mt-4 block text-xs font-bold uppercase tracking-wide text-ink">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => { setPassword(event.target.value); setError(""); }}
+              autoComplete="current-password"
+              required
+              className={`w-full rounded-xl border bg-white px-3 py-3.5 text-sm text-ink outline-none transition-colors focus:border-accent ${error ? "border-crit" : "border-border"}`}
+            />
             {error && <p className="mt-2 text-xs font-medium text-crit">{error}</p>}
             <button
               type="submit"
+              disabled={isSubmitting}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#376A34]"
             >
-              Enter dashboard
+              {isSubmitting ? "Signing in..." : "Sign in"}
               <ArrowRight size={16} />
             </button>
           </form>
 
           <p className="mt-8 max-w-sm text-[11px] leading-5 text-muted">
-            This dashboard is intended for authorized campus administrators. Your session stays private to this browser.
+            Administrator accounts are created and managed in Supabase. Public sign-up should remain disabled.
           </p>
         </section>
       </div>

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Building2, Search, ChevronDown, LocateFixed, Map, Navigation } from "lucide-react";
+import { Building2, Search, LocateFixed, Map, Navigation } from "lucide-react";
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { Card } from "./Card";
 import { buildings } from "../data/buildings";
@@ -14,7 +14,6 @@ function ResetMapView({ mapRef }) {
 
 export default function BuildingsPage({ onOpenBuilding }) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
   const [selectedBuilding, setSelectedBuilding] = useState(buildings[0]);
   const mapRef = useRef(null);
 
@@ -22,10 +21,9 @@ export default function BuildingsPage({ onOpenBuilding }) {
     const query = search.trim().toLowerCase();
     return buildings.filter((building) => {
       const matchesSearch = !query || building.name.toLowerCase().includes(query);
-      const matchesStatus = statusFilter === "All Status" || building.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [search, statusFilter]);
+  }, [search]);
 
   const chooseBuilding = (building) => setSelectedBuilding(building);
 
@@ -41,19 +39,6 @@ export default function BuildingsPage({ onOpenBuilding }) {
             className="w-full rounded-full border border-border bg-white py-2 pl-8 pr-3 text-sm text-ink outline-none placeholder:text-muted"
           />
         </div>
-        <label className="relative">
-          <span className="sr-only">Filter buildings by status</span>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="appearance-none rounded-md border border-border bg-white py-2 pl-3 pr-8 text-sm text-ink outline-none"
-          >
-            <option>All Status</option>
-            <option>Normal</option>
-            <option>High Usage</option>
-          </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted" />
-        </label>
       </div>
 
       <Card className="mb-5 overflow-hidden">
@@ -63,11 +48,7 @@ export default function BuildingsPage({ onOpenBuilding }) {
               <Map size={17} className="text-accent" />
               ESSU campus map
             </div>
-            <p className="mt-1 text-xs text-muted">Navigate registered colleges, facilities, and campus landmarks.</p>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-accent">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-            Live campus data
+            <p className="mt-1 text-xs text-muted">Campus building directory.</p>
           </div>
         </div>
 
@@ -91,7 +72,7 @@ export default function BuildingsPage({ onOpenBuilding }) {
                   <Popup>
                     <div className="min-w-[150px]">
                       <div className="font-bold text-[#1B2338]">{building.name}</div>
-                      <div className="mt-1 text-xs text-[#8A93A8]">{building.kwh} today</div>
+                      <div className="mt-1 text-xs text-[#8A93A8]">{building.category}</div>
                       <button type="button" onClick={() => onOpenBuilding(building.name)} className="mt-2 rounded-md bg-[#4A8445] px-2.5 py-1.5 text-xs font-semibold text-white">View consumption</button>
                     </div>
                   </Popup>
@@ -112,7 +93,7 @@ export default function BuildingsPage({ onOpenBuilding }) {
             <div>
               <div className="text-xs font-bold uppercase tracking-wide text-muted">Selected building</div>
               <div className="mt-1 text-base font-bold text-ink">{selectedBuilding.name}</div>
-              <div className="mt-0.5 text-xs text-muted">{selectedBuilding.kwh} today</div>
+              <div className="mt-0.5 text-xs text-muted">No electricity meter readings</div>
             </div>
             <div className="flex items-center gap-4">
               <button type="button" onClick={() => onOpenBuilding(selectedBuilding.name)} className="rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#376A34]">View consumption</button>
@@ -137,8 +118,8 @@ export default function BuildingsPage({ onOpenBuilding }) {
                   <span className="block font-semibold text-ink">{b.name}</span>
                 </span>
               </div>
-              <div className="text-xs text-muted">Electricity today</div>
-              <div className="mt-1 text-xl font-bold text-ink">{b.kwh}</div>
+              <div className="text-xs text-muted">{b.category}</div>
+              <div className="mt-1 text-sm text-muted">No live energy data</div>
             </Card>
           </button>
         ))}

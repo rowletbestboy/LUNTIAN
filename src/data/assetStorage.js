@@ -1,5 +1,3 @@
-const STORAGE_KEY = "luntian-managed-assets";
-
 const EMPTY_ASSETS = {
   buildings: [],
   rooms: [],
@@ -7,20 +5,31 @@ const EMPTY_ASSETS = {
   sockets: [],
 };
 
-export function loadManagedAssets() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    return Object.fromEntries(
-      Object.keys(EMPTY_ASSETS).map((key) => [
-        key,
-        Array.isArray(stored[key]) ? stored[key] : [],
-      ])
-    );
-  } catch {
-    return EMPTY_ASSETS;
+import { requireSupabase } from "../lib/supabase";
+
+export async function loadManagedAssets(userId) {
+  const { data, error } = await requireSupabase()
+    .from("managed_assets")
+    .select("id, kind, data")
+    .eq("owner_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+
+  const assets = { ...EMPTY_ASSETS };
+  for (const row of data) {
+    assets[row.kind]?.push({ ...row.data, id: row.id });
   }
+  return assets;
 }
 
-export function saveManagedAssets(assets) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
+export async function saveManagedAsset(userId, kind, asset) {
+  const { data, error } = await requireSupabase()
+    .from("managed_assets")
+    .insert({ owner_id: userId, kind, data: asset })
+    .select("id, data")
+    .single();
+
+  if (error) throw error;
+  return { ...data.data, id: data.id };
 }
