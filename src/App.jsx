@@ -1,56 +1,22 @@
-import { useState } from "react";
-import { Zap, Droplet, Leaf, Plug, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
-import { StatCard } from "./components/Card";
-import ElectricityChart from "./components/ElectricityChart";
-import BreakdownDonut from "./components/BreakdownDonut";
-import WaterTankStatus from "./components/WaterTankStatus";
-import RecentAlerts from "./components/RecentAlerts";
+import LiveDashboardPage from "./components/LiveDashboardPage";
 import BuildingsPage from "./components/BuildingsPage";
-import BuildingDetailPage from "./components/BuildingDetailPage";
-import CampusOverviewPage from "./components/CampusOverviewPage";
 import WaterOverviewPage from "./components/WaterOverviewPage";
 import TankMonitoringPage from "./components/TankMonitoringPage";
 import DevicesPage from "./components/DevicesPage";
 import SchedulesPage from "./components/SchedulesPage";
-import AutomationPage from "./components/AutomationPage";
-import AnalyticsPage from "./components/AnalyticsPage";
-import EnergySavingsPage from "./components/EnergySavingsPage";
-import AlertsPage from "./components/AlertsPage";
-import ReportsPage from "./components/ReportsPage";
-import PlaceholderPage from "./components/PlaceholderPage";
+import LiveAnalyticsPage from "./components/LiveAnalyticsPage";
+import LiveAlertsPage from "./components/LiveAlertsPage";
+import LiveReportsPage from "./components/LiveReportsPage";
+import LiveEnergySavingsPage from "./components/LiveEnergySavingsPage";
+import LiveAutomationPage from "./components/LiveAutomationPage";
+import NoReadingsPage from "./components/NoReadingsPage";
 import SignInPage from "./components/SignInPage";
 import AdminProfilePage from "./components/AdminProfilePage";
 import AssetManagementPage from "./components/AssetManagementPage";
-import { buildings, getBuildingEmissionsKg, getBuildingConsumptionKwh } from "./data/buildings";
-
-const DEFAULT_PROFILE = { name: "Admin User", role: "Super Administrator", email: "admin@campus.local" };
-
-function getStoredProfile() {
-  try {
-    return { ...DEFAULT_PROFILE, ...JSON.parse(localStorage.getItem("luntian-admin-profile") || "{}") };
-  } catch {
-    return DEFAULT_PROFILE;
-  }
-}
-
-const totalCampusConsumptionKwh = buildings.reduce(
-  (total, building) => total + getBuildingConsumptionKwh(building),
-  0
-);
-const totalCampusEmissionsKg = buildings.reduce(
-  (total, building) => total + getBuildingEmissionsKg(building),
-  0
-);
-
-const dashboardStats = [
-  { icon: Zap, iconBg: "#E8A317", label: "Total Electricity", value: "2,457 kW", sub: "Current Power" },
-  { icon: Droplet, iconBg: "#4A8445", label: "Total Water", value: "76%", sub: "Average Tank Level" },
-  { icon: Leaf, iconBg: "#31AFC5", label: "Carbon Emitted", value: `${(totalCampusEmissionsKg / 1000).toFixed(2)} tCO₂e`, sub: `${totalCampusConsumptionKwh.toLocaleString()} kWh today` },
-  { icon: Plug, iconBg: "#22A559", label: "Smart Outlets", value: "247", sub: "Active Outlets" },
-  { icon: AlertCircle, iconBg: "#E0432B", label: "Alerts", value: "7", sub: "Active Alerts" },
-];
+import { supabase } from "./lib/supabase";
 
 const PAGE_META = {
   dashboard: { title: "Dashboard" },
@@ -68,13 +34,22 @@ const PAGE_META = {
 };
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => sessionStorage.getItem("luntian-admin-authenticated") === "true"
-  );
+  const [user, setUser] = useState(null);
+  const isAuthenticated = Boolean(user);
   const [showSignIn, setShowSignIn] = useState(false);
-  const [profile, setProfile] = useState(getStoredProfile);
   const [page, setPage] = useState("dashboard");
   const [selectedBuilding, setSelectedBuilding] = useState(null);
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user || null));
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const navigate = (nextPage) => {
     if (nextPage === "asset-management" && !isAuthenticated) {
@@ -92,17 +67,21 @@ export default function App() {
 
   const openProfile = () => setPage("admin-profile");
 
-  const logout = () => {
-    sessionStorage.removeItem("luntian-admin-authenticated");
-    setIsAuthenticated(false);
+  const logout = async () => {
+    await supabase?.auth.signOut();
     setPage("dashboard");
+  };
+
+  const profile = {
+    name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Administrator",
+    role: user?.app_metadata?.role || "Administrator",
+    email: user?.email || "",
   };
 
   if (showSignIn) {
     return (
       <SignInPage
         onAuthenticated={() => {
-          setIsAuthenticated(true);
           setShowSignIn(false);
         }}
         onCancel={() => setShowSignIn(false)}
@@ -133,58 +112,41 @@ export default function App() {
         <TopBar
           title={title}
           breadcrumb={breadcrumb}
-          rightLabel={page === "dashboard" ? "May 20, 2024" : undefined}
           isAuthenticated={isAuthenticated}
           onSignIn={() => setShowSignIn(true)}
         />
 
-        {page === "dashboard" && (
-          <>
-            <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
-              {dashboardStats.map((s) => (
-                <StatCard key={s.label} {...s} />
-              ))}
-            </div>
-            <div className="mb-5 flex flex-col gap-4 xl:flex-row">
-              <ElectricityChart />
-              <BreakdownDonut />
-            </div>
-            <div className="flex flex-col gap-4 xl:flex-row">
-              <WaterTankStatus />
-              <RecentAlerts />
-            </div>
-          </>
-        )}
+        {page === "dashboard" && <LiveDashboardPage userId={user?.id} />}
 
-        {page === "campus-overview" && <CampusOverviewPage />}
+        {page === "campus-overview" && <NoReadingsPage title="No campus electricity readings" detail="The connected demo device does not measure electricity consumption. Campus energy metrics will appear when compatible meters are connected." />}
 
         {page === "buildings" && <BuildingsPage onOpenBuilding={openBuilding} />}
 
-        {page === "building-detail" && <BuildingDetailPage buildingName={selectedBuilding} />}
+        {page === "building-detail" && <NoReadingsPage title={`${selectedBuilding} · no readings`} detail="No electricity meter is connected to this building yet." />}
 
-        {page === "water-overview" && <WaterOverviewPage onNavigate={navigate} />}
+        {page === "water-overview" && <WaterOverviewPage userId={user?.id} onNavigate={navigate} />}
 
-        {page === "tank-monitoring" && <TankMonitoringPage />}
+        {page === "tank-monitoring" && <TankMonitoringPage userId={user?.id} />}
 
-        {page === "devices" && <DevicesPage />}
+        {page === "devices" && <DevicesPage userId={user?.id} />}
 
-        {page === "schedules" && <SchedulesPage />}
+        {page === "schedules" && <SchedulesPage userId={user?.id} />}
 
-        {page === "automation" && <AutomationPage />}
+        {page === "automation" && <LiveAutomationPage userId={user?.id} />}
 
-        {page === "alerts" && <AlertsPage />}
+        {page === "alerts" && <LiveAlertsPage userId={user?.id} />}
 
-        {page === "analytics" && <AnalyticsPage />}
+        {page === "analytics" && <LiveAnalyticsPage userId={user?.id} />}
 
-        {page === "energy-savings" && <EnergySavingsPage />}
+        {page === "energy-savings" && <LiveEnergySavingsPage />}
 
-        {page === "reports" && <ReportsPage />}
+        {page === "reports" && <LiveReportsPage userId={user?.id} />}
 
-        {page === "admin-profile" && (
-          <AdminProfilePage onProfileUpdated={setProfile} onLogout={logout} />
+        {page === "admin-profile" && user && (
+          <AdminProfilePage user={user} onProfileUpdated={setUser} onLogout={logout} />
         )}
 
-        {page === "asset-management" && isAuthenticated && <AssetManagementPage />}
+        {page === "asset-management" && user && <AssetManagementPage userId={user.id} />}
 
       </main>
     </div>
